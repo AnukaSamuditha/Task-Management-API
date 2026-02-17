@@ -10,6 +10,7 @@ export type UserAttributes = {
   emailVerificationExpires?: Date | null;
   createdAt?: Date;
   updatedAt?: Date;
+  refreshToken?: string
 }
 
 export interface UserCreationAttributes extends Optional<
@@ -21,3 +22,7 @@ export interface UserCreationAttributes extends Optional<
   | "createdAt"
   | "updatedAt"
 > {}
+
+export type DecodedToken = {
+  userID : string
+}

@@ -1,9 +1,10 @@
 import User from "../models/user.js";
 import type { Request, Response } from "express";
-import { registerSchema } from "../schemas/index.js";
+import { loginSchema, registerSchema } from "../schemas/index.js";
 import { generateVerificationCode } from "../utils/generateOTP.js";
 import bcrypt from "bcrypt";
 import { sendEmail } from "../utils/sendEmail.js";
+import { generateAccessToken, generateRefreshToken } from "../utils/jwt.js";
 
 const createUser = async (req: Request, res: Response) => {
   try {
@@ -167,4 +168,143 @@ const resendVerificationCode = async (req: Request, res: Response) => {
   }
 };
 
-export { createUser, confirmVerificationCode, resendVerificationCode };
+const loginUser = async (req: Request, res: Response) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({
+        error: "Missing required information",
+      });
+    }
+
+    const validationResult = loginSchema.safeParse({
+      email,
+      password,
+    });
+
+    if (!validationResult.success) {
+      return res.status(400).json({
+        error: "Login data validation failed",
+        details: validationResult.error,
+      });
+    }
+
+    const user = await User.findOne({
+      where: { email },
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        error: "Invalid credentials",
+      });
+    }
+
+    const isPasswordMatching = await bcrypt.compare(
+      validationResult.data.password,
+      user.dataValues.password,
+    );
+
+    if (!isPasswordMatching) {
+      return res.status(404).json({
+        error: "Invalid credentials",
+      });
+    }
+
+    const accessToken = generateAccessToken(user.dataValues.id);
+    const refreshToken = generateRefreshToken(user.dataValues.id);
+
+    await user.update({
+      refreshToken,
+    });
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 24 * 60 * 60 * 1000,
+      sameSite: "strict",
+    });
+
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 15 * 60 * 1000,
+      sameSite: "strict",
+    });
+
+    res.status(200).json({
+      message: "Login successfull",
+      user: {
+        id: user.dataValues.id,
+        fullName: user.dataValues.fullName,
+        email: user.dataValues.email,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: "Error occurred while login in!",
+      details: error,
+    });
+  }
+};
+
+const refreshToken = async (req: Request, res: Response) => {
+  try {
+    const userID = (req as any).userID;
+    const refreshToken = req.cookies.refreshToken;
+
+    if (!userID || !refreshToken) {
+      return res.status(400).json({
+        error: "Invalid request!",
+      });
+    }
+
+    const user = await User.findOne({
+      where: { id: userID },
+    });
+
+    if (!user || !user.dataValues.refreshToken) {
+      return res.status(404).json({
+        message: "Refresh token not found!",
+      });
+    }
+
+    if (user.dataValues.refreshToken !== refreshToken) {
+      return res.status(401).json({
+        message: "Invalid refresh token",
+      });
+    }
+
+    const newAccessToken = generateAccessToken(user.dataValues.id);
+	const newRefreshToken = generateRefreshToken(user.dataValues.id);
+
+	await user.update({
+		refreshToken: newRefreshToken
+	})
+
+    res.cookie("accessToken", newAccessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 15 * 60 * 1000,
+      sameSite: "strict",
+    });
+
+    res.status(200).json({
+      message: "Access token refreshed successfully",
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      error: "Error occurred while login in!",
+      details: error,
+    });
+  }
+};
+
+export {
+  createUser,
+  confirmVerificationCode,
+  resendVerificationCode,
+  loginUser,
+  refreshToken
+};

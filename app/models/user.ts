@@ -2,7 +2,7 @@ import { db } from "../configs/database.js";
 import { DataTypes, Model } from "sequelize";
 import { UserAttributes, UserCreationAttributes } from "../types/index.js";
 
-const User = db.define<Model<UserAttributes,UserCreationAttributes>>(
+const User = db.define<Model<UserAttributes, UserCreationAttributes>>(
   "user",
   {
     id: {
@@ -30,15 +30,19 @@ const User = db.define<Model<UserAttributes,UserCreationAttributes>>(
       type: DataTypes.STRING(255),
       allowNull: false,
     },
-    isEmailVerified:{
+    isEmailVerified: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
     },
-    emailVerificationCode:DataTypes.INTEGER,
+    emailVerificationCode: DataTypes.INTEGER,
     emailVerificationExpires: DataTypes.DATE,
+    refreshToken: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
   },
   {
-    timestamps:true,
+    timestamps: true,
     indexes: [
       {
         unique: true,
