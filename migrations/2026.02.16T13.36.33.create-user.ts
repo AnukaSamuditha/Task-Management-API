@@ -1,7 +1,7 @@
 import type { MigrationFn } from "umzug";
 import { type Sequelize, DataTypes } from "sequelize";
 
-type MigrationContext = {
+export type MigrationContext = {
   sequelize: Sequelize;
   DataTypes: typeof DataTypes;
 };
