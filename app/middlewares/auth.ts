@@ -8,7 +8,10 @@ const authenticate = async (
   next: NextFunction,
 ) => {
   try {
-    const token = req.cookies.accessToken;
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.startsWith("Bearer")
+      ? authHeader.split(" ")[1]
+      : req.cookies.accessToken;
 
     if (!token) {
       return res.status(401).json({
@@ -25,6 +28,15 @@ const authenticate = async (
 
     next();
   } catch (error) {
+    if (
+      error instanceof jwt.JsonWebTokenError ||
+      error instanceof jwt.TokenExpiredError
+    ) {
+      return res.status(401).json({
+        error: "Invalid or expired token",
+      });
+    }
+
     res.status(500).json({
       error: "Error occurred while authenticating the request",
       details: error,
@@ -55,6 +67,15 @@ const validateRefreshToken = async (
 
     next();
   } catch (error) {
+    if (
+      error instanceof jwt.JsonWebTokenError ||
+      error instanceof jwt.TokenExpiredError
+    ) {
+      return res.status(401).json({
+        error: "Invalid or expired refresh token",
+      });
+    }
+
     res.status(500).json({
       error: "Refresh token authentication failed",
       details: error,

@@ -217,8 +217,8 @@ const loginUser = async (req: Request, res: Response) => {
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      maxAge: 15 * 60 * 1000,
-      sameSite: "strict",
+      maxAge: 30 * 60 * 1000,
+      sameSite: "lax",
     });
 
     res.status(200).json({
@@ -271,15 +271,23 @@ const refreshToken = async (req: Request, res: Response) => {
       refreshToken: newRefreshToken,
     });
 
+    res.cookie("refreshToken", newRefreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 24 * 60 * 60 * 1000,
+      sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+    });
+
     res.cookie("accessToken", newAccessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      maxAge: 15 * 60 * 1000,
-      sameSite: "strict",
+      maxAge: 30 * 60 * 1000,
+      sameSite: "lax",
     });
 
     res.status(200).json({
       message: "Access token refreshed successfully",
+      accessToken: newAccessToken,
     });
   } catch (error) {
     res.status(500).json({
