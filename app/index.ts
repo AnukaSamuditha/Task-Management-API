@@ -1,13 +1,15 @@
 import express, { Request, Response } from "express";
 import { connectDB } from "./configs/database.js";
 import authRoutes from "./routes/auth.route.js";
+import userRoutes from "./routes/user.route.js";
+import taskRoutes from "./routes/task.route.js";
 import cors from "cors";
-import cookieParser from 'cookie-parser';
+import cookieParser from "cookie-parser";
 
 const PORT = process.env.PORT ?? "5000";
 const app = express();
 
-app.use(cookieParser())
+app.use(cookieParser());
 app.use(express.json());
 
 app.use(
@@ -18,6 +20,8 @@ app.use(
 );
 
 app.use("/auth", authRoutes);
+app.use("/users", userRoutes);
+app.use("/tasks", taskRoutes);
 
 await connectDB()
   .then(() => {

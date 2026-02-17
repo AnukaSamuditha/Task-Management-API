@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
-import { DecodedToken } from "../types/index.js";
+import { AuthRequest, DecodedToken } from "../types/index.js";
 
 const authenticate = async (
   req: Request,
@@ -21,7 +21,7 @@ const authenticate = async (
       process.env.JWT_ACCESS_SECRET as string,
     ) as DecodedToken;
 
-    (req as any).userID = decodedToken.userID;
+    (req as AuthRequest).userID = decodedToken.userID;
 
     next();
   } catch (error) {
@@ -51,7 +51,7 @@ const validateRefreshToken = async (
       process.env.JWT_REFRESH_SECRET as string,
     ) as DecodedToken;
 
-    (req as any).userID = decodedToken.userID;
+    (req as AuthRequest).userID = decodedToken.userID;
 
     next();
   } catch (error) {
