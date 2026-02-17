@@ -1,20 +1,15 @@
-import User from "../models/user.js";
+import User from "../models/user.model.js";
 import type { Request, Response } from "express";
 import { loginSchema, registerSchema } from "../schemas/index.js";
 import { generateVerificationCode } from "../utils/generateOTP.js";
 import bcrypt from "bcrypt";
 import { sendEmail } from "../utils/sendEmail.js";
 import { generateAccessToken, generateRefreshToken } from "../utils/jwt.js";
+import { AuthRequest } from "../types/index.js";
 
 const createUser = async (req: Request, res: Response) => {
   try {
     const { fullName, email, password } = req.body;
-
-    if (!fullName || !email || !password) {
-      return res.status(400).json({
-        error: "Missing required information",
-      });
-    }
 
     const validationResult = registerSchema.safeParse({
       fullName,
@@ -172,12 +167,6 @@ const loginUser = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({
-        error: "Missing required information",
-      });
-    }
-
     const validationResult = loginSchema.safeParse({
       email,
       password,
@@ -222,7 +211,7 @@ const loginUser = async (req: Request, res: Response) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       maxAge: 24 * 60 * 60 * 1000,
-      sameSite: "strict",
+      sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
     });
 
     res.cookie("accessToken", accessToken, {
@@ -250,7 +239,7 @@ const loginUser = async (req: Request, res: Response) => {
 
 const refreshToken = async (req: Request, res: Response) => {
   try {
-    const userID = (req as any).userID;
+    const userID = (req as AuthRequest).userID;
     const refreshToken = req.cookies.refreshToken;
 
     if (!userID || !refreshToken) {
@@ -276,11 +265,11 @@ const refreshToken = async (req: Request, res: Response) => {
     }
 
     const newAccessToken = generateAccessToken(user.dataValues.id);
-	const newRefreshToken = generateRefreshToken(user.dataValues.id);
+    const newRefreshToken = generateRefreshToken(user.dataValues.id);
 
-	await user.update({
-		refreshToken: newRefreshToken
-	})
+    await user.update({
+      refreshToken: newRefreshToken,
+    });
 
     res.cookie("accessToken", newAccessToken, {
       httpOnly: true,
@@ -292,7 +281,6 @@ const refreshToken = async (req: Request, res: Response) => {
     res.status(200).json({
       message: "Access token refreshed successfully",
     });
-
   } catch (error) {
     res.status(500).json({
       error: "Error occurred while login in!",
@@ -306,5 +294,5 @@ export {
   confirmVerificationCode,
   resendVerificationCode,
   loginUser,
-  refreshToken
+  refreshToken,
 };
