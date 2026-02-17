@@ -15,7 +15,10 @@
     "test": "vitest",
     "test:run": "vitest --run",
     "test:ui": "vitest --ui",
-    "coverage": "vitest run --coverage"
+    "coverage": "vitest run --coverage",
+    "migrate": "node --env-file .env --import tsx umzug.ts up",
+    "migrate:rollback": "node --env-file .env --import tsx umzug.ts down",
+    "migration:create": "node --env-file .env --import tsx umzug.ts create --folder ./migrations"
   },
   "keywords": [],
   "author": "",
@@ -23,17 +26,25 @@
   "type": "module",
   "dependencies": {
     "@vitest/eslint-plugin": "^1.6.9",
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.6",
     "express": "^5.2.1",
     "jiti": "^2.6.1",
+    "nodemailer": "^8.0.1",
     "pg": "^8.18.0",
     "pg-hstore": "^2.3.4",
-    "sequelize": "^6.37.7"
+    "sequelize": "^6.37.7",
+    "umzug": "^3.8.2",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
     "@tsconfig/node22": "^22.0.5",
+    "@types/bcrypt": "^6.0.0",
+    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/node": "^25.2.3",
+    "@types/nodemailer": "^7.0.10",
     "eslint": "^9.39.2",
     "eslint-plugin-perfectionist": "^5.5.0",
     "prettier": "^3.8.1",

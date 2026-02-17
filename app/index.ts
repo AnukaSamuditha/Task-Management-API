@@ -1,10 +1,21 @@
 import express, { Request, Response } from "express";
 import { connectDB } from "./configs/database.js";
+import authRoutes from "./routes/auth.route.js";
+import cors from "cors";
 
 const PORT = process.env.PORT ?? "5000";
 const app = express();
 
 app.use(express.json());
+
+app.use(
+  cors({
+    origin: process.env.FRONTEND_PREFIX,
+    credentials: false,
+  }),
+);
+
+app.use("/auth", authRoutes);
 
 await connectDB()
   .then(() => {

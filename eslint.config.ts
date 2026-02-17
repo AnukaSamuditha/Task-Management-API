@@ -30,6 +30,7 @@ export default defineConfig(
     rules: {
       ...vitest.configs.recommended.rules,
       "@typescript-eslint/unbound-method": "off",
+      "@typescript-eslint/no-require-imports": "off",
     },
   },
 );
